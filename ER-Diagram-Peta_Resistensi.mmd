@@ -1,0 +1,232 @@
+erDiagram
+    instansi ||--o{ users : memiliki
+    instansi ||--o{ lokasi_koleksi : memiliki
+    instansi ||--o{ uji_kerentanan : menguji
+    instansi ||--o{ uji_mutasi : menganalisis
+    users }o--o{ roles : berperan
+    users ||--o{ uji_kerentanan : petugas
+    users ||--o{ uji_mutasi : petugas
+    users ||--o{ dokumen : pemilik
+    users ||--o{ riwayat_status : pelaku
+    users ||--o{ audit_log : pelaku
+    users ||--o{ pengaturan_status : mengubah
+    wilayah ||--o{ wilayah : induk
+    wilayah ||--o{ lokasi_koleksi : desa
+    lokasi_koleksi ||--o{ uji_kerentanan : asal_sampel
+    lokasi_koleksi ||--o{ uji_mutasi : asal_sampel
+    spesies ||--o{ uji_kerentanan : diuji
+    spesies ||--o{ uji_mutasi : dianalisis
+    spesies ||--o{ strain_rujukan : memiliki
+    golongan_insektisida ||--o{ insektisida : mengelompokkan
+    insektisida ||--o{ uji_kerentanan : dipakai
+    metode ||--o{ uji_kerentanan : dipakai
+    metode ||--o{ uji_mutasi : dipakai
+    strain_rujukan |o--o{ uji_kerentanan : pembanding
+    uji_kerentanan ||--o{ uji_replikasi : memiliki
+    uji_kerentanan ||--o{ uji_konsentrasi : memiliki
+    uji_mutasi ||--o{ uji_mutasi_marker : memiliki
+    uji_kerentanan ||--o{ dokumen : lampiran
+    uji_mutasi ||--o{ dokumen : lampiran
+    uji_kerentanan ||--o{ riwayat_status : riwayat
+    uji_mutasi ||--o{ riwayat_status : riwayat
+
+    instansi {
+        uuid id PK
+        string nama
+        string jenis "bblkl|karantina_kesehatan|dinkes|lainnya"
+        text alamat
+        string kontak
+        boolean aktif
+    }
+    users {
+        uuid id PK
+        uuid instansi_id FK
+        string name
+        string username UK
+        string email UK
+        string password
+        boolean aktif
+        timestamptz email_verified_at
+        timestamptz last_login_at
+    }
+    roles {
+        bigint id PK
+        string name UK "super_admin|admin|verifikator|petugas|klien|pimpinan"
+        string guard_name
+    }
+    wilayah {
+        bigint id PK
+        bigint parent_id FK
+        string kode UK "kode wilayah resmi"
+        string nama
+        string tingkat "provinsi|kabupaten_kota|kecamatan|desa"
+        decimal latitude
+        decimal longitude
+        jsonb batas_geojson
+        boolean aktif
+    }
+    lokasi_koleksi {
+        uuid id PK
+        uuid instansi_id FK
+        bigint desa_id FK
+        string nama
+        string alamat_dusun
+        decimal latitude
+        decimal longitude
+        string tipe_habitat "permukiman|pelabuhan|bandara|perkotaan|lainnya"
+        boolean aktif
+        timestamptz deleted_at
+    }
+    spesies {
+        bigint id PK
+        string nama_ilmiah UK
+        string nama_umum
+        string genus
+        string vektor_penyakit
+        boolean aktif
+    }
+    strain_rujukan {
+        bigint id PK
+        bigint spesies_id FK
+        string nama
+        text keterangan
+    }
+    golongan_insektisida {
+        bigint id PK
+        string nama UK "piretroid|organofosfat|karbamat|organoklorin|igr|biolarvasida"
+    }
+    insektisida {
+        bigint id PK
+        bigint golongan_id FK
+        string nama UK
+        string bahan_aktif
+        string peruntukan "dewasa|larva|keduanya"
+        decimal konsentrasi_diskriminasi
+        string satuan_konsentrasi
+        boolean aktif
+    }
+    metode {
+        bigint id PK
+        string nama UK
+        string jenis "kerentanan|molekuler|biokimia"
+        string stadium_sasaran "dewasa|larva|keduanya"
+        string rujukan_pedoman
+        boolean aktif
+    }
+    uji_kerentanan {
+        uuid id PK
+        uuid instansi_id FK
+        uuid lokasi_koleksi_id FK
+        bigint spesies_id FK
+        bigint insektisida_id FK
+        bigint metode_id FK
+        bigint strain_rujukan_id FK
+        uuid petugas_id FK
+        date tanggal_koleksi
+        date tanggal_uji
+        string stadium "dewasa|larva"
+        string generasi "F0|F1|lainnya"
+        string jenis_sampel "lapangan|strain_rujukan"
+        decimal konsentrasi
+        string satuan_konsentrasi
+        integer durasi_pemaparan_menit
+        integer durasi_pengamatan_jam
+        decimal suhu_c
+        decimal kelembapan_persen
+        integer jumlah_uji_total
+        integer jumlah_mati_total
+        decimal mortalitas_persen
+        decimal mortalitas_kontrol_persen
+        decimal mortalitas_terkoreksi_persen
+        decimal lc50
+        decimal lc95
+        decimal rr50
+        decimal rr95
+        string status_resistensi "rentan|kemungkinan_resisten|resisten|resisten_sedang|resisten_tinggi|belum_cukup_data"
+        boolean valid
+        string status_data "draft|diajukan|diverifikasi|terpublikasi|ditolak"
+        text catatan
+        timestamptz published_at
+        timestamptz deleted_at
+    }
+    uji_replikasi {
+        bigint id PK
+        uuid uji_kerentanan_id FK
+        string tipe "perlakuan|kontrol"
+        integer nomor
+        integer jumlah_uji
+        integer jumlah_knockdown
+        integer jumlah_mati
+    }
+    uji_konsentrasi {
+        bigint id PK
+        uuid uji_kerentanan_id FK
+        decimal konsentrasi
+        string satuan
+        integer jumlah_larva
+        integer jumlah_mati
+    }
+    uji_mutasi {
+        uuid id PK
+        uuid instansi_id FK
+        uuid lokasi_koleksi_id FK
+        bigint spesies_id FK
+        bigint metode_id FK
+        uuid petugas_id FK
+        date tanggal_koleksi
+        date tanggal_analisis
+        integer jumlah_sampel
+        string status_data "draft|diajukan|diverifikasi|terpublikasi|ditolak"
+        text catatan
+        timestamptz published_at
+        timestamptz deleted_at
+    }
+    uji_mutasi_marker {
+        bigint id PK
+        uuid uji_mutasi_id FK
+        string gen "VGSC|Ace-1|lainnya"
+        string mutasi "V1016G|F1534C|S989P|G119S"
+        integer jumlah_rr
+        integer jumlah_rs
+        integer jumlah_ss
+        decimal frekuensi_alel_mutan
+    }
+    dokumen {
+        uuid id PK
+        string dokumen_type "uji_kerentanan|uji_mutasi"
+        uuid dokumen_id "polimorfik"
+        uuid pemilik_id FK
+        string nama_file
+        string jenis_dokumen
+        string path
+        bigint ukuran_byte
+        timestamptz uploaded_at
+    }
+    riwayat_status {
+        bigint id PK
+        string statusable_type "uji_kerentanan|uji_mutasi"
+        uuid statusable_id "polimorfik"
+        uuid user_id FK
+        string dari_status
+        string ke_status
+        text alasan
+        timestamptz created_at
+    }
+    audit_log {
+        bigint id PK
+        uuid user_id FK
+        string event "created|updated|deleted|login"
+        string auditable_type
+        string auditable_id
+        jsonb nilai_lama
+        jsonb nilai_baru
+        string ip_address
+        timestamptz created_at
+    }
+    pengaturan_status {
+        bigint id PK
+        uuid diubah_oleh FK
+        string kunci UK "contoh: dewasa_rentan_min"
+        jsonb nilai
+        timestamptz updated_at
+    }

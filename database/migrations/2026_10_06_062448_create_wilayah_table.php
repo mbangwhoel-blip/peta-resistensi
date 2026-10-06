@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('wilayah', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('parent_id')->nullable()->constrained('wilayah')->nullOnDelete();
+            $table->string('kode', 20)->unique();
+            $table->string('nama', 150);
+            $table->string('tingkat', 25)->index(); // provinsi|kabupaten_kota|kecamatan|desa
+            $table->decimal('latitude', 10, 7)->nullable();
+            $table->decimal('longitude', 10, 7)->nullable();
+            $table->jsonb('batas_geojson')->nullable();
+            $table->boolean('aktif')->default(true);
+            $table->timestampsTz();
+
+            $table->index(['parent_id', 'tingkat']);
+            $table->index('nama');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('wilayah');
+    }
+};
